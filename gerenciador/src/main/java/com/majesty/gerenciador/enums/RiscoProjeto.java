@@ -1,6 +1,6 @@
 package com.majesty.gerenciador.enums;
 
-public enum Risco {
+public enum RiscoProjeto {
 
     BAIXO,
     MEDIO,

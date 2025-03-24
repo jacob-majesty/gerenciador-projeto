@@ -1,6 +1,6 @@
 package com.majesty.gerenciador.enums;
 
-public enum Status {
+public enum StatusProjeto {
     EM_ANALISE,
     ANALISE_REALIZADA,
     ANALISE_APROVADA,
