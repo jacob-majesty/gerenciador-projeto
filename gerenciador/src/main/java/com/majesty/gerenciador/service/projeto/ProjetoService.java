@@ -1,74 +1,92 @@
 package com.majesty.gerenciador.service.projeto;
 
+import com.majesty.gerenciador.dto.ProjetoDTO;
 import com.majesty.gerenciador.dto.RelatorioDTO;
 import com.majesty.gerenciador.entity.Membro;
 import com.majesty.gerenciador.entity.Projeto;
+import com.majesty.gerenciador.enums.RiscoProjeto;
 import com.majesty.gerenciador.enums.StatusProjeto;
+import com.majesty.gerenciador.exception.RecursoNaoEncontradoException;
+import com.majesty.gerenciador.exception.RequisicaoInvalidaException;
+import com.majesty.gerenciador.mapper.ProjetoMapper;
 import com.majesty.gerenciador.repository.MembroRepository;
 import com.majesty.gerenciador.repository.ProjetoRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static com.majesty.gerenciador.enums.StatusProjeto.*;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProjetoService implements  IProjetoService{
 
     private final ProjetoRepository projetoRepository;
     private final MembroRepository membroRepository;
+    private final ProjetoMapper projetoMapper;
 
-    private ProjetoService(ProjetoRepository projetoRepository, MembroRepository membroRepository){
-        this.projetoRepository = projetoRepository;
-        this.membroRepository = membroRepository;
+    public ProjetoDTO criarProjeto(ProjetoDTO projetoDTO) {
+        Membro gerente = membroRepository.findById(projetoDTO.getGerenteId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Gerente não encontrado"));
+
+        Projeto projeto = projetoMapper.toEntity(projetoDTO, gerente);
+        projetoRepository.save(projeto);
+        return projetoMapper.toDTO(projeto);
+    }
+
+    public ProjetoDTO obterProjeto(Long id) {
+        Projeto projeto = projetoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Projeto não encontrado"));
+        return projetoMapper.toDTO(projeto);
+    }
+
+    public List<ProjetoDTO> listarProjetos() {
+        return projetoRepository.findAll()
+                .stream()
+                .map(projetoMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public ProjetoDTO atualizarProjeto(Long id, ProjetoDTO projetoDTO) {
+        Projeto projeto = projetoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Projeto não encontrado"));
+
+        Membro gerente = membroRepository.findById(projetoDTO.getGerenteId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Gerente não encontrado"));
+
+        Projeto atualizado = projetoMapper.toEntity(projetoDTO, gerente);
+        atualizado.setId(projeto.getId());
+        projetoRepository.save(atualizado);
+        return projetoMapper.toDTO(atualizado);
+    }
+
+    public void deletarProjeto(Long id) {
+        Projeto projeto = projetoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Projeto não encontrado"));
+
+        proibidoExcluirProjeto(projeto);
+        projetoRepository.delete(projeto);
     }
 
     @Override
-    public String calcularRisco(BigDecimal orcamentoTotal, LocalDate previsaoDeTermino, LocalDate dataDeInicio) {
+    public String calculaRisco(BigDecimal orcamentoTotal, LocalDate previsaoDeTermino, LocalDate dataDeInicio) {
         long meses = ChronoUnit.MONTHS.between(dataDeInicio, previsaoDeTermino);
 
         if (calcularBaixoRisco(orcamentoTotal, meses)) {
-            return "Baixo Risco";
+            return RiscoProjeto.BAIXO.name();
+
         } else if (calcularMedioRisco(orcamentoTotal, meses)) {
-            return "Médio Risco";
+            return RiscoProjeto.MEDIO.name();
+
         } else if (calcularAltoRisco(orcamentoTotal, meses)) {
-            return "Alto Risco";
+            return RiscoProjeto.ALTO.name();
         }
 
         return "Desconhecido";
-    }
-
-    @Override
-    public void alocarMembroAoProjeto(Long projetoId, Long membroId) {
-        Projeto projeto = projetoRepository.findById(projetoId)
-                .orElseThrow(() -> new RuntimeException("Projeto não encontrado"));
-
-        Membro membro = membroRepository.findById(membroId)
-                .orElseThrow(() -> new RuntimeException("Membro não encontrado"));
-
-        // Verifica se o membro tem a atribuição "funcionário"
-        if (!"funcionário".equals(membro.getCargo())) {
-            throw new IllegalArgumentException("Apenas membros com atribuição 'funcionário' podem ser alocados.");
-        }
-
-        // Verifica se o projeto já possui 10 membros
-        if (projeto.getMembrosAlocados().size() >= 10) {
-            throw new IllegalArgumentException("O projeto já possui o número máximo de membros.");
-        }
-
-        // Verifica se o membro não está alocado em mais de 3 projetos com status diferente de 'encerrado' ou 'cancelado'
-        long projetosAtivos = membro.getProjetosAlocados().stream()
-                .filter(p -> p.getStatusAtual() != StatusProjeto.ENCERRADO && p.getStatusAtual() != StatusProjeto.CANCELADO)
-                .count();
-
-        if (projetosAtivos >= 3) {
-            throw new IllegalArgumentException("O membro não pode estar alocado em mais de 3 projetos simultaneamente com status ativo.");
-        }
     }
 
     private boolean calcularBaixoRisco(BigDecimal orcamentoTotal, long meses) {
@@ -85,54 +103,60 @@ public class ProjetoService implements  IProjetoService{
     }
 
 
-    @Override
-    public void cancelarProjeto(Projeto projeto) {
-        projeto.setStatusAtual(StatusProjeto.CANCELADO);
-    }
+    public void seguirTransitacaoStatus(Long projetoId, StatusProjeto novoStatus) {
+        Projeto projeto = projetoRepository.findById(projetoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Projeto não encontrado"));
 
+        proibidoPularStatus(projeto.getStatusAtual(), novoStatus);
 
-    @Override
-    public void transitarStatus(Projeto projeto, StatusProjeto novoStatus) {
-        if (!podeTransitarPara(StatusProjeto.valueOf(String.valueOf(projeto.getStatusAtual())), novoStatus)) {
-            throw new IllegalArgumentException("Não é permitido pular etapas. A transição é inválida.");
-        }
         projeto.setStatusAtual(novoStatus);
-
+        projetoRepository.save(projeto);
     }
 
-    @Override
-    public boolean podeTransitarPara(StatusProjeto atualStatus, StatusProjeto novoStatus) {
-        if (novoStatus == StatusProjeto.CANCELADO) {
-            return true;
+    public void cancelarProjeto(Long projetoId) {
+        Projeto projeto = projetoRepository.findById(projetoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Projeto não encontrado"));
+
+        projeto.setStatusAtual(StatusProjeto.CANCELADO);
+        projetoRepository.save(projeto);
+    }
+
+    public void proibidoPularStatus(StatusProjeto atual, StatusProjeto novo) {
+        List<StatusProjeto> ordemStatus = List.of(
+                StatusProjeto.EM_ANALISE, StatusProjeto.ANALISE_REALIZADA, StatusProjeto.ANALISE_APROVADA,
+                StatusProjeto.INICIADO, StatusProjeto.PLANEJADO, StatusProjeto.EM_ANDAMENTO, StatusProjeto.ENCERRADO
+        );
+
+        if (!ordemStatus.contains(novo) || ordemStatus.indexOf(novo) != ordemStatus.indexOf(atual) + 1) {
+            throw new IllegalStateException("Transição de status inválida!");
         }
-        List<StatusProjeto> statusPermitidos = Arrays.asList(StatusProjeto.values());
-        int index = statusPermitidos.indexOf(this);
-        int indexNovoStatus = statusPermitidos.indexOf(novoStatus);
-        return indexNovoStatus == index + 1;
     }
 
-    @Override
-    public void excluirProjeto(Projeto projeto) {
-        if (projeto.getStatusAtual() == StatusProjeto.INICIADO ||
-                projeto.getStatusAtual() == StatusProjeto.EM_ANDAMENTO ||
-                projeto.getStatusAtual() == ENCERRADO) {
-            throw new IllegalArgumentException("Não é possível excluir o projeto nos status 'iniciado', 'em andamento' ou 'encerrado'.");
+    public void proibidoExcluirProjeto(Projeto projeto) {
+        if (List.of(StatusProjeto.INICIADO, StatusProjeto.EM_ANDAMENTO, StatusProjeto.ENCERRADO)
+                .contains(projeto.getStatusAtual())) {
+            throw new IllegalStateException("Não é permitido excluir um projeto neste status!");
         }
+    }
+
+    public void alocarMembroAoProjeto(Long projetoId, Long membroId) {
+        Projeto projeto = projetoRepository.findById(projetoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Projeto não encontrado"));
+        Membro membro = membroRepository.findById(membroId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Membro não encontrado"));
+
+        throw new RequisicaoInvalidaException("Apenas funcionários podem ser alocados a projetos");
 
     }
 
+
     @Override
-    public RelatorioDTO gerarRelatorio() {
+    public RelatorioDTO gerarRelatorioPortfolio() {
 
         Map<String, Integer> quantidadePorStatus = projetoRepository.countProjetosPorStatus();
-
         Map<String, BigDecimal> totalOrcadoPorStatus = projetoRepository.totalOrcadoPorStatus();
-
         BigDecimal mediaDuracaoProjetosEncerrados = projetoRepository.mediaDuracaoProjetosEncerrados();
-
-
         Integer totalMembrosUnicosAlocados = projetoRepository.totalMembrosUnicosAlocados();
-
 
         return new RelatorioDTO(
                 quantidadePorStatus,
