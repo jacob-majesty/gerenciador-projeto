@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/gerenciadordb
-    username: user
-    password: password
+    url: jdbc:postgresql://localhost:5432/projetodb
+    username: root
+    password: root
   jpa:
     hibernate:
       ddl-auto: update
