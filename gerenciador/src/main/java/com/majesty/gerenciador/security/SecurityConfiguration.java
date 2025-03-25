@@ -3,6 +3,7 @@ package com.majesty.gerenciador.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,25 +15,33 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
+
 public class SecurityConfiguration {
 
-    // Configurando a segurança  HTTP
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .csrf(csrf -> csrf.disable()) // desativar para teste no postman
                 .authorizeHttpRequests(authz -> authz
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/**").authenticated()
+                            .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                            ).permitAll()
+                        .anyRequest().permitAll()
                 )
-                .httpBasic(withDefaults());
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 🔄 Torna a autenticação stateless
+                .httpBasic();
         return http.build();
     }
 
-    // Em memória usando o UserDetailsService
+
     @Bean
     public UserDetailsService userDetailsService() {
-        UserDetails user = User.withDefaultPasswordEncoder()
-                .username("user")
-                .password("password")
+        UserDetails user = User.withUsername("user")
+                .password("{noop}senha")
                 .roles("USER")
                 .build();
 
