@@ -1,10 +1,10 @@
 package com.majesty.gerenciador.dto;
 
 import com.majesty.gerenciador.enums.StatusProjeto;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,7 +16,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProjetoDTO {
-    @NotNull(message = "ID não pode ser nulo")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotEmpty(message = "Nome não pode ser vazio")
@@ -35,6 +36,11 @@ public class ProjetoDTO {
     @Positive(message = "Orçamento total deve ser maior que zero")
     private BigDecimal orcamentoTotal;
 
+    @NotBlank(message = "O cargo é obrigatório.")
+    @Size(max = 50, message = "O cargo deve ter no máximo 50 caracteres.")
+    @Pattern(regexp = "^(funcionário|gerente)$", message = "O cargo deve ser 'funcionário' ou 'gerente'.")
+    private String cargo;
+
     @NotEmpty(message = "Descrição não pode ser vazia")
     private String descricao;
 
@@ -43,4 +49,16 @@ public class ProjetoDTO {
 
     @NotNull(message = "Status do projeto não pode ser nulo")
     private StatusProjeto status;
+
+    public ProjetoDTO(Long id, String nome, LocalDate dataDeInicio, LocalDate previsaoDeTermino, LocalDate dataDeTermino, BigDecimal orcamentoTotal, String descricao, Long gerenteId, StatusProjeto statusAtual) {
+        this.id = id;
+        this.nome = nome;
+        this.dataDeInicio = dataDeInicio;
+        this.previsaoDeTermino = previsaoDeTermino;
+        this.dataDeTermino = dataDeTermino;
+        this.orcamentoTotal = orcamentoTotal;
+        this.descricao = descricao;
+        this.gerenteId = gerenteId;
+        this.status = statusAtual;
+    }
 }

@@ -2,6 +2,7 @@ package com.majesty.gerenciador.service.membro;
 
 import com.majesty.gerenciador.entity.Membro;
 import com.majesty.gerenciador.entity.Projeto;
+import com.majesty.gerenciador.repository.MembroRepository;
 import com.majesty.gerenciador.repository.ProjetoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -13,15 +14,19 @@ import java.util.Optional;
 
 @Service
 public class MembroService implements IMembroService {
-
+    private final MembroRepository membroRepository;
     private final List<Membro> membros = new ArrayList<>();
     private long nextId = 1;
+
+    public MembroService(MembroRepository membroRepository) {
+        this.membroRepository = membroRepository;
+    }
 
     @Override
     public Membro criarMembro(String nome, String cargo) {
         Membro membro = new Membro(nextId++, nome, cargo);
         membros.add(membro);
-        return membro;
+        return membroRepository.save(membro);
     }
 
     @Override

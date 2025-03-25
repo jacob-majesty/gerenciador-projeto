@@ -31,13 +31,26 @@ public class ProjetoService implements  IProjetoService{
     private final ProjetoMapper projetoMapper;
 
     public ProjetoDTO criarProjeto(ProjetoDTO projetoDTO) {
+        if (projetoDTO.getGerenteId() == null) {
+            throw new RequisicaoInvalidaException("O ID do gerente não pode ser nulo.");
+        }
+
         Membro gerente = membroRepository.findById(projetoDTO.getGerenteId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Gerente não encontrado"));
 
-        Projeto projeto = projetoMapper.toEntity(projetoDTO, gerente);
-        projetoRepository.save(projeto);
-        return projetoMapper.toDTO(projeto);
+        if (!"gerente".equalsIgnoreCase(gerente.getCargo())) {
+            throw new RequisicaoInvalidaException("O membro selecionado como gerente responsável deve ter a atribuição 'gerente'.");
+        }
+
+        try {
+            Projeto projeto = projetoMapper.toEntity(projetoDTO, gerente);
+            projeto = projetoRepository.save(projeto);
+            return projetoMapper.toDTO(projeto);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao salvar projeto: " + e.getMessage(), e);
+        }
     }
+
 
     public ProjetoDTO obterProjeto(Long id) {
         Projeto projeto = projetoRepository.findById(id)
