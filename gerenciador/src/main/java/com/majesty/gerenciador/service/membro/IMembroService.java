@@ -4,14 +4,10 @@ import com.majesty.gerenciador.entity.Membro;
 import com.majesty.gerenciador.entity.Projeto;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IMembroService {
-
-    List<Projeto> getProjetosAtivosPorMembro(Long membroId);
-
     Membro criarMembro(String nome, String cargo);
-
-    Membro consultarMembro(Long id);
-
-
+    List<Membro> listarMembros();
+    Optional<Membro> buscarMembro(Long id);
 }

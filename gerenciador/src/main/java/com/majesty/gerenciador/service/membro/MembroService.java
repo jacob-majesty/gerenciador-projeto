@@ -6,39 +6,32 @@ import com.majesty.gerenciador.repository.ProjetoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
 
 @Service
 public class MembroService implements IMembroService {
 
-    // URL fictícia para a API externa que cria membros
-    private static final String URL_API_EXTERNA = "https://api.externa.com/membros";
-    private final RestTemplate restTemplate;
-    private final ProjetoRepository projetoRepository;
+    private final List<Membro> membros = new ArrayList<>();
+    private long nextId = 1;
 
-
-    private MembroService(RestTemplate restTemplate, ProjetoRepository projetoRepository) {
-        this.restTemplate = restTemplate;
-        this.projetoRepository = projetoRepository;
-    }
-
-    public List<Projeto> getProjetosAtivosPorMembro(Long membroId) {
-        return projetoRepository.acharProjetosAtivosPorMembro(membroId);
-    }
-
+    @Override
     public Membro criarMembro(String nome, String cargo) {
-        // Criando um objeto que representa o membro a ser enviado à API
-        Membro membro = new Membro();
-        membro.setNome(nome);
-        membro.setCargo(cargo);
-
-        // Enviando o membro para a API externa
-        return restTemplate.postForObject(URL_API_EXTERNA, membro, Membro.class);
+        Membro membro = new Membro(nextId++, nome, cargo);
+        membros.add(membro);
+        return membro;
     }
 
-    public Membro consultarMembro(Long id) {
-        // Consultando o membro na API externa usando o ID
-        return restTemplate.getForObject(URL_API_EXTERNA + "/" + id, Membro.class);
+    @Override
+    public List<Membro> listarMembros() {
+        return membros;
+    }
+
+    @Override
+    public Optional<Membro> buscarMembro(Long id) {
+        return membros.stream().filter(membro -> membro.getId().equals(id)).findFirst();
     }
 }
 
