@@ -18,7 +18,7 @@ public interface ProjetoRepository extends JpaRepository<Projeto, Long> {
     List<Projeto> acharProjetosAtivosPorMembro(@Param("membroId") Long membroId);
 
     @Query("SELECT p.statusAtual, COUNT(p) FROM Projeto p GROUP BY p.statusAtual")
-    Map<String, Integer> countProjetosPorStatus();
+    Map<String, Integer> contarProjetosPorStatus();
 
     @Query("SELECT p.statusAtual, SUM(p.orcamentoTotal) FROM Projeto p GROUP BY p.statusAtual")
     Map<String, BigDecimal> totalOrcadoPorStatus();
