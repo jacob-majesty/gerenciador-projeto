@@ -25,6 +25,12 @@ public class Membro {
     private String senha;
     private String cargo; // "funcionário", "gerente"
 
-    @ManyToMany(mappedBy = "membroAlocados")
+    @ManyToMany(mappedBy = "membrosAlocados")
     private Set<Projeto> projetosAlocados = new HashSet<>();
+
+    public Membro(long id, String nome, String cargo) {
+        this.id = id;
+        this.nome = nome;
+        this.cargo = cargo;
+    }
 }
