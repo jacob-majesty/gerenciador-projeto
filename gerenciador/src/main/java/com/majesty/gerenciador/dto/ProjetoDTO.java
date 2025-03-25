@@ -1,43 +1,24 @@
 package com.majesty.gerenciador.dto;
 
-import com.majesty.gerenciador.entity.Membro;
-import com.majesty.gerenciador.entity.Projeto;
 import com.majesty.gerenciador.enums.StatusProjeto;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-public record ProjetoDTO(
-        Long id,
-        String nome,
-        LocalDate dataDeInicio,
-        LocalDate previsaoDeTermino,
-        LocalDate dataDeTermino,
-        BigDecimal orcamentoTotal,
-        String descricao,
-        StatusProjeto statusAtual,
-        List<String> membrosAlocados
-) {
-    public ProjetoDTO(Projeto projeto) {
-        this(
-                projeto.getId(),
-                projeto.getNome(),
-                projeto.getDataDeInicio(),
-                projeto.getPrevisaoDeTermino(),
-                projeto.getDataDeTermino(),
-                projeto.getOrcamentoTotal(),
-                projeto.getDescricao(),
-                projeto.getStatusAtual(),
-                Optional.ofNullable(projeto.getMembrosAlocados())
-                        .orElse(Collections.emptySet())
-                        .stream()
-                        .map(Membro::getNome)
-                        .collect(Collectors.toList())
-        );
-    }
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProjetoDTO {
+    private Long id;
+    private String nome;
+    private LocalDate dataDeInicio;
+    private LocalDate previsaoDeTermino;
+    private LocalDate dataDeTermino;
+    private BigDecimal orcamentoTotal;
+    private String descricao;
+    private Long gerenteId;
+    private StatusProjeto status;
 }
