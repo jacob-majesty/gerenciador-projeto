@@ -4,12 +4,10 @@ import com.majesty.gerenciador.dto.ProjetoDTO;
 import com.majesty.gerenciador.entity.Membro;
 import com.majesty.gerenciador.entity.Projeto;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-@NoArgsConstructor
 public class ProjetoMapper {
 
     public ProjetoDTO toDTO(Projeto projeto) {
