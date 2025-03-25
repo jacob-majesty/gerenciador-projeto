@@ -23,8 +23,9 @@ public interface ProjetoRepository extends JpaRepository<Projeto, Long> {
     @Query("SELECT p.statusAtual, SUM(p.orcamentoTotal) FROM Projeto p GROUP BY p.statusAtual")
     Map<String, BigDecimal> totalOrcadoPorStatus();
 
-    @Query("SELECT AVG(DATEDIFF(p.dataDeTermino, p.dataDeInicio)) FROM Projeto p WHERE p.statusAtual = 'ENCERRADO'")
+    @Query(value = "SELECT AVG(DATEDIFF(p.dataDeTermino, p.dataDeInicio)) FROM Projeto p WHERE p.statusAtual = 'ENCERRADO'", nativeQuery = true)
     BigDecimal mediaDuracaoProjetosEncerrados();
+
 
     @Query("SELECT COUNT(DISTINCT m) FROM Membro m JOIN m.projetosAlocados p WHERE p.statusAtual NOT IN ('ENCERRADO', 'CANCELADO')")
     Integer totalMembrosUnicosAlocados();
