@@ -4,6 +4,7 @@ import com.majesty.gerenciador.dto.ProjetoDTO;
 import com.majesty.gerenciador.dto.RelatorioDTO;
 import com.majesty.gerenciador.entity.Membro;
 import com.majesty.gerenciador.entity.Projeto;
+import com.majesty.gerenciador.enums.Cargo;
 import com.majesty.gerenciador.enums.RiscoProjeto;
 import com.majesty.gerenciador.enums.StatusProjeto;
 import com.majesty.gerenciador.exception.RecursoNaoEncontradoException;
@@ -86,7 +87,7 @@ public class ProjetoService implements  IProjetoService{
             return RiscoProjeto.ALTO.name();
         }
 
-        return "Desconhecido";
+        return "Operação inválida";
     }
 
     private boolean calcularBaixoRisco(BigDecimal orcamentoTotal, long meses) {
@@ -128,31 +129,44 @@ public class ProjetoService implements  IProjetoService{
         );
 
         if (!ordemStatus.contains(novo) || ordemStatus.indexOf(novo) != ordemStatus.indexOf(atual) + 1) {
-            throw new IllegalStateException("Transição de status inválida!");
+            throw new RequisicaoInvalidaException("Transição de status inválida!");
         }
     }
 
     public void proibidoExcluirProjeto(Projeto projeto) {
         if (List.of(StatusProjeto.INICIADO, StatusProjeto.EM_ANDAMENTO, StatusProjeto.ENCERRADO)
                 .contains(projeto.getStatusAtual())) {
-            throw new IllegalStateException("Não é permitido excluir um projeto neste status!");
+            throw new RequisicaoInvalidaException("Não é permitido excluir um projeto neste status!");
         }
     }
 
     public void alocarMembroAoProjeto(Long projetoId, Long membroId) {
         Projeto projeto = projetoRepository.findById(projetoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Projeto não encontrado"));
+
         Membro membro = membroRepository.findById(membroId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Membro não encontrado"));
 
-        throw new RequisicaoInvalidaException("Apenas funcionários podem ser alocados a projetos");
+        if (!membro.getCargo().equals(Cargo.FUNCIONARIO.name())) {
+            throw new RequisicaoInvalidaException("Apenas funcionários podem ser alocados a projetos");
+        }
 
+        if (projeto.getMembrosAlocados().size() >= 10) {
+            throw new RequisicaoInvalidaException("Este projeto já atingiu o limite máximo de membros");
+        }
+
+        long projetosAtivos = membroRepository.contarProjetosAtivosPorMembro(membroId);
+        if (projetosAtivos >= 3) {
+            throw new RequisicaoInvalidaException("Este membro já está alocado em 3 projetos ativos");
+        }
+
+        projeto.getMembrosAlocados().add(membro);
+        projetoRepository.save(projeto);
     }
 
 
     @Override
     public RelatorioDTO gerarRelatorioPortfolio() {
-
         Map<String, Integer> quantidadePorStatus = projetoRepository.countProjetosPorStatus();
         Map<String, BigDecimal> totalOrcadoPorStatus = projetoRepository.totalOrcadoPorStatus();
         BigDecimal mediaDuracaoProjetosEncerrados = projetoRepository.mediaDuracaoProjetosEncerrados();
