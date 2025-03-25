@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: projetodb
+    ports:
+      - "5432:5432"
+    networks:
+      - projeto
+
+  app:
+    build: .
+    depends_on:
+      - postgres
+    networks:
+      - projeto
+networks:
+  projeto:
+    driver: bridge
