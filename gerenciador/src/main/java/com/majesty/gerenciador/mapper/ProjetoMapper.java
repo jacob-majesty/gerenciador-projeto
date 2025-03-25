@@ -36,7 +36,7 @@ public class ProjetoMapper {
         projeto.setOrcamentoTotal(dto.getOrcamentoTotal());
         projeto.setDescricao(dto.getDescricao());
         projeto.setGerente(gerente);
-        projeto.setStatusAtual(dto.getStatusAtual());
+        projeto.setStatusAtual(dto.getStatus());
         return projeto;
     }
 }
