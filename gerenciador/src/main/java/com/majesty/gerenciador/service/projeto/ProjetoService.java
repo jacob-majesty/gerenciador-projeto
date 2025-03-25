@@ -167,7 +167,7 @@ public class ProjetoService implements  IProjetoService{
 
     @Override
     public RelatorioDTO gerarRelatorioPortfolio() {
-        Map<String, Integer> quantidadePorStatus = projetoRepository.countProjetosPorStatus();
+        Map<String, Integer> quantidadePorStatus = projetoRepository.contarProjetosPorStatus();
         Map<String, BigDecimal> totalOrcadoPorStatus = projetoRepository.totalOrcadoPorStatus();
         BigDecimal mediaDuracaoProjetosEncerrados = projetoRepository.mediaDuracaoProjetosEncerrados();
         Integer totalMembrosUnicosAlocados = projetoRepository.totalMembrosUnicosAlocados();
