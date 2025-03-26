@@ -1,10 +1,6 @@
 package com.majesty.gerenciador.dto;
 
-import com.majesty.gerenciador.enums.StatusProjeto;
-import com.majesty.gerenciador.repository.ProjetoRepository;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.math.BigDecimal;
 import java.util.Map;
 
