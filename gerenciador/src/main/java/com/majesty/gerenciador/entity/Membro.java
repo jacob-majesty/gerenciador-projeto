@@ -28,8 +28,7 @@ public class Membro {
     @ManyToMany(mappedBy = "membrosAlocados")
     private Set<Projeto> projetosAlocados = new HashSet<>();
 
-    public Membro(long id, String nome, String cargo) {
-        this.id = id;
+    public Membro(String nome, String cargo) {
         this.nome = nome;
         this.cargo = cargo;
     }
