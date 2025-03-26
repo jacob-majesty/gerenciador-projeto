@@ -13,6 +13,9 @@ import com.majesty.gerenciador.mapper.ProjetoMapper;
 import com.majesty.gerenciador.repository.MembroRepository;
 import com.majesty.gerenciador.repository.ProjetoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -20,7 +23,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,24 +33,9 @@ public class ProjetoService implements  IProjetoService{
     private final ProjetoMapper projetoMapper;
 
     public ProjetoDTO criarProjeto(ProjetoDTO projetoDTO) {
-        if (projetoDTO.getGerenteId() == null) {
-            throw new RequisicaoInvalidaException("O ID do gerente não pode ser nulo.");
-        }
-
         Membro gerente = membroRepository.findById(projetoDTO.getGerenteId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Gerente não encontrado"));
-
-        if (!"gerente".equalsIgnoreCase(gerente.getCargo())) {
-            throw new RequisicaoInvalidaException("O membro selecionado como gerente responsável deve ter a atribuição 'gerente'.");
-        }
-
-        try {
-            Projeto projeto = projetoMapper.toEntity(projetoDTO, gerente);
-            projeto = projetoRepository.save(projeto);
-            return projetoMapper.toDTO(projeto);
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao salvar projeto: " + e.getMessage(), e);
-        }
+        return projetoMapper.toDTO(projetoRepository.save(projetoMapper.toEntity(projetoDTO, gerente)));
     }
 
 
@@ -58,21 +45,21 @@ public class ProjetoService implements  IProjetoService{
         return projetoMapper.toDTO(projeto);
     }
 
-    public List<ProjetoDTO> listarProjetos() {
-        return projetoRepository.findAll()
-                .stream()
-                .map(projetoMapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<ProjetoDTO> listarProjetos(String nome, String descricao, LocalDate dataDeInicio,
+                                           LocalDate dataDeTermino, int pagina, int tamanho) {
+        Pageable pageable = PageRequest.of(pagina, tamanho);
+        Page<Projeto> projetos = projetoRepository.findByFilters(nome, descricao, dataDeInicio, dataDeTermino, pageable);
+        if (projetos == null) {
+            return Page.empty();
+        }
+        return projetos.map(projetoMapper::toDTO);
     }
 
     public ProjetoDTO atualizarProjeto(Long id, ProjetoDTO projetoDTO) {
         Projeto projeto = projetoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Projeto não encontrado"));
 
-        Membro gerente = membroRepository.findById(projetoDTO.getGerenteId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Gerente não encontrado"));
-
-        Projeto atualizado = projetoMapper.toEntity(projetoDTO, gerente);
+        Projeto atualizado = projetoMapper.toEntity(projetoDTO, projeto.getGerente());
         atualizado.setId(projeto.getId());
         projetoRepository.save(atualizado);
         return projetoMapper.toDTO(atualizado);
@@ -192,4 +179,5 @@ public class ProjetoService implements  IProjetoService{
                 totalMembrosUnicosAlocados
         );
     }
+
 }
