@@ -69,13 +69,9 @@ Após iniciar o projeto, você pode acessar os endpoints através de:
 
 - **Swagger**: `http://localhost:8080/swagger-ui.html`
 - **API**: `http://localhost:8080/api`
+- 
+![image](https://github.com/user-attachments/assets/96eb02d9-6873-4eb6-88c9-18ea39dedd3d)
 
-## Estrutura de Diretórios
-
-- **src/main/java**: Código-fonte do aplicativo
-- **src/main/resources**: Arquivos de configuração (como `application.properties`)
-- **src/test**: Testes unitários e de integração
-- **docker-compose.yml**: Arquivo para configuração do Docker
 
 ## Testes
 
