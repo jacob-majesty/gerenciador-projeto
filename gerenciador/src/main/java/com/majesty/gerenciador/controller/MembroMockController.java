@@ -30,7 +30,7 @@ public class MembroMockController {
     })
     @PostMapping
     public ResponseEntity<Membro> criarMembro(@RequestBody Membro membro) {
-        Membro novoMembro = membroService.criarMembro(membro.getNome(), membro.getCargo());
+        Membro novoMembro = membroService.criarMembro(membro.getNome(), membro.getCargo()).getBody();
         return ResponseEntity.status(HttpStatus.CREATED).body(novoMembro);
     }
 
