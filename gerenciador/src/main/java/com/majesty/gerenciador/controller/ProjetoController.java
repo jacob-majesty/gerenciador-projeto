@@ -11,11 +11,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/projetos")
@@ -48,10 +50,23 @@ public class ProjetoController {
 
     @Operation(summary = "Listar todos os projetos", description = "Retorna uma lista com todos os projetos cadastrados.")
     @ApiResponse(responseCode = "200", description = "Lista de projetos retornada com sucesso")
-    @GetMapping
-    public ResponseEntity<List<ProjetoDTO>> listarProjetos() {
-        return ResponseEntity.ok(projetoService.listarProjetos());
+    @GetMapping("/projetos")
+    public ResponseEntity<Page<ProjetoDTO>> listarProjetos(
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) String descricao,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataDeInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataDeTermino,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "5") int tamanho) {
+
+        if (pagina < 0) pagina = 0;
+        if (tamanho <= 0) tamanho = 5;
+
+        Page<ProjetoDTO> projetosDTO = projetoService.listarProjetos(nome, descricao, dataDeInicio, dataDeTermino, pagina, tamanho);
+
+        return ResponseEntity.ok(projetosDTO);
     }
+
 
     @Operation(summary = "Atualizar um projeto", description = "Atualiza os detalhes de um projeto existente.")
     @ApiResponses({
